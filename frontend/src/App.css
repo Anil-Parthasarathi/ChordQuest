@@ -1,0 +1,26 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.status-container {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #3a3f47;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.status-container p {
+  margin: 0.5rem 0;
+}
