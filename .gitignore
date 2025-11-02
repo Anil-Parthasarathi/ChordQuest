@@ -1,0 +1,21 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data files
+backend/data/raw/
+backend/data/processed/
+*.csv
+*.json
+!**/seeds/*.json
+!**/sample*.json
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# OS
+.DS_Store
