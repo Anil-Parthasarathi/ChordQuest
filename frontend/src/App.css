@@ -2,16 +2,29 @@
   text-align: center;
 }
 
+/* Use Audiowide font for a cool, semi-futuristic, playful, musical style */
+.App {
+  text-align: center;
+  font-family: 'Audiowide', Arial, sans-serif;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
 .App-header {
-  background-color: #282c34;
+  background-color: #E6E6FA; /*Lavender*/
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: #40E0D0; /*Turquoise*/
 }
+
+/*40E0D0*/
 
 .status-container {
   margin-top: 2rem;
