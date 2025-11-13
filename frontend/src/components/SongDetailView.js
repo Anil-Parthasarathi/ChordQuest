@@ -68,15 +68,39 @@ function SongDetailView({
 
       {/* Chords Display Section */}
       <div className="chords-section">
-        <h2 className="section-title">Chords & Lyrics</h2>
+        <h2 className="section-title">Music</h2>
         <div className="chords-container">
-          <iframe id="score-iframe" width="100%" height="394" src="https://musescore.com/user/27224589/scores/4978804/embed" frameborder="0" allowfullscreen allow="autoplay; fullscreen">
-          </iframe>
-          <div className="sheet-music-credit">
-            <a href="https://musescore.com/user/27224589/scores/4978804" target="_blank" className="sheet-music-title">Viva La Vida Guitar and Violin</a> by <a href="https://musescore.com/user/27224589" target="_blank" className="sheet-music-author">kožo92</a> via MuseScore
-          </div>
-        </div>``
+          {song.url && (
+            <>
+              <iframe 
+                id="score-iframe" 
+                width="100%" 
+                height="1000" 
+                src={`https://musescore.com${song.url}/embed`} 
+                frameborder="0" 
+                allowfullscreen 
+                allow="autoplay; fullscreen"
+                title="Sheet Music"
+              >
+              </iframe>
+              <div className="sheet-music-credit">
+                <a href={`https://musescore.com${song.url}`} target="_blank" rel="noreferrer" className="sheet-music-title">{song.title}</a> by <a href={`https://musescore.com/user/${song.authorUserId || song.artist}`} target="_blank" rel="noreferrer" className="sheet-music-author">{song.artist}</a> via MuseScore
+              </div>
+            </>
+          )}
+          {!song.url && (
+            <p className="no-results">Sheet music embed not available.</p>
+          )}
+        </div>
       </div>
+
+      {/* Description Section */}
+      {song.description && (
+        <div className="description-section">
+          <h2 className="section-title">Description</h2>
+          <p className="song-description">{song.description}</p>
+        </div>
+      )}
 
       {/* Similar Songs Recommendations */}
       <div className="similar-songs-section">

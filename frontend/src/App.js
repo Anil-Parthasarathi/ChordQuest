@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import HomeView from './components/HomeView';
@@ -10,7 +10,23 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentView, setCurrentView] = useState('home'); // 'home', 'results', 'favorites', 'songDetail'
   const [searchResults, setSearchResults] = useState([]);
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const raw = localStorage.getItem('chordquest.favorites');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Persist favorites to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('chordquest.favorites', JSON.stringify(favorites));
+    } catch (e) {
+      // ignore localStorage write errors (e.g., storage full or disabled)
+    }
+  }, [favorites]);
   const [currentSongId, setCurrentSongId] = useState(null);
 
   // Placeholder data for music sheets
@@ -29,16 +45,28 @@ function App() {
     { id: 8, title: "Hey Jude", artist: "The Beatles", difficulty: "Beginner", key: "F Major" },
   ];
 
-  // Placeholder search function, just simple binary search for now
-  const handleSearch = (e) => {
+  // Search function
+  const handleSearch = async (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      // Filter placeholder results based on search query
-      const filtered = placeholderSongs.filter(song =>
-        song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        song.artist.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setSearchResults(filtered);
+    if (!searchQuery.trim()) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/search?query=${encodeURIComponent(searchQuery)}`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Search results from backend:', data.result);
+        setSearchResults(data.result);
+        setCurrentView('results');
+      } else {
+        console.error('Backend search returned error status:', res.status);
+        setSearchResults([]);
+        setCurrentView('results');
+      }
+    } catch (err) {
+      console.error('Backend search failed:', err);
+      setSearchResults([]);
       setCurrentView('results');
     }
   };
@@ -49,30 +77,28 @@ function App() {
   };
 
   const getCurrentSong = () => {
-    const allSongs = [...placeholderSongs, ...recommendedSongs];
+    const allSongs = [...searchResults, ...placeholderSongs, ...recommendedSongs];
     return allSongs.find(song => song.id === currentSongId);
   };
 
   const getSimilarSongs = () => {
-    // Get 3 random songs as similar songs (placeholder logic)
-    const allSongs = [...placeholderSongs, ...recommendedSongs];
+    const allSongs = [...searchResults, ...placeholderSongs, ...recommendedSongs];
     const otherSongs = allSongs.filter(song => song.id !== currentSongId);
     return otherSongs.slice(0, 3);
   };
 
   const toggleFavorite = (e, songId) => {
     e.stopPropagation(); // Prevent song click when clicking favorite button
-    if (favorites.includes(songId)) {
-      setFavorites(favorites.filter(id => id !== songId));
-    } else {
-      setFavorites([...favorites, songId]);
-    }
+    setFavorites(prev => (
+      prev.includes(songId) ? prev.filter(id => id !== songId) : [...prev, songId]
+    ));
   };
 
   const isFavorite = (songId) => favorites.includes(songId);
 
   const getFavoriteSongs = () => {
-    return [...placeholderSongs, ...recommendedSongs].filter(song => favorites.includes(song.id));
+    const allSongs = [...searchResults, ...placeholderSongs, ...recommendedSongs];
+    return allSongs.filter(song => favorites.includes(song.id));
   };
 
   return (

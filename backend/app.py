@@ -1,8 +1,9 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+from search import bm25_Search
 
 # Load environment variables from root .env file
 env_path = Path(__file__).parent.parent / '.env'
@@ -24,6 +25,16 @@ def health_check():
 def hello():
     """Sample API endpoint"""
     return jsonify({'message': 'Hello from Flask!'})
+
+@app.route('/api/search', methods=['GET'])
+def search_sheet_music():
+    """Search endpoint"""
+    query = request.args.get('query', '').strip()
+    if not query:
+        return jsonify({'error': 'missing query parameter'}), 400
+
+    result = bm25_Search(query)
+    return jsonify({'result': result})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
