@@ -12,23 +12,24 @@ function App() {
   const [previousView, setPreviousView] = useState('home'); // Track the view to return to from song detail
   const [currentPage, setCurrentPage] = useState(1); // Track current page for results
   const [searchResults, setSearchResults] = useState([]);
-  const [favorites, setFavorites] = useState(() => {
-    try {
-      const raw = localStorage.getItem('chordquest.favorites');
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [favoriteSongs, setFavoriteSongs] = useState([]);
 
-  // Persist favorites to localStorage whenever they change
+  // Load favorites from backend on startup
   useEffect(() => {
-    try {
-      localStorage.setItem('chordquest.favorites', JSON.stringify(favorites));
-    } catch (e) {
-      // ignore localStorage write errors (e.g., storage full or disabled)
-    }
-  }, [favorites]);
+    const loadFavorites = async () => {
+      try {
+        const res = await fetch('/api/retrieveFavorites');
+        if (res.ok) {
+          const data = await res.json();
+          setFavoriteSongs(data.favorites || []);
+        }
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
+      }
+    };
+    loadFavorites();
+  }, []);
+
   const [currentSongId, setCurrentSongId] = useState(null);
 
   // Placeholder data for music sheets
@@ -38,13 +39,6 @@ function App() {
     { id: 3, title: "Hotel California", artist: "Eagles", difficulty: "Intermediate", key: "Bm" },
     { id: 4, title: "Let It Be", artist: "The Beatles", difficulty: "Beginner", key: "C Major" },
     { id: 5, title: "Wonderwall", artist: "Oasis", difficulty: "Beginner", key: "Em" },
-  ];
-
-  // Recommended songs (placeholder)
-  const recommendedSongs = [
-    { id: 6, title: "Sweet Child O' Mine", artist: "Guns N' Roses", difficulty: "Intermediate", key: "D Major" },
-    { id: 7, title: "Stairway to Heaven", artist: "Led Zeppelin", difficulty: "Advanced", key: "Am" },
-    { id: 8, title: "Hey Jude", artist: "The Beatles", difficulty: "Beginner", key: "F Major" },
   ];
 
   // Search function
@@ -84,29 +78,58 @@ function App() {
   };
 
   const getCurrentSong = () => {
-    const allSongs = [...searchResults, ...placeholderSongs, ...recommendedSongs];
+    const allSongs = [...searchResults, ...placeholderSongs, ...favoriteSongs];
     return allSongs.find(song => song.id === currentSongId);
   };
 
   const getSimilarSongs = () => {
-    const allSongs = [...searchResults, ...placeholderSongs, ...recommendedSongs];
+    const allSongs = [...searchResults, ...placeholderSongs, ...favoriteSongs];
     const otherSongs = allSongs.filter(song => song.id !== currentSongId);
     return otherSongs.slice(0, 3);
   };
 
-  const toggleFavorite = (e, songId) => {
+  const toggleFavorite = async (e, songId) => {
     e.stopPropagation(); // Prevent song click when clicking favorite button
-    setFavorites(prev => (
-      prev.includes(songId) ? prev.filter(id => id !== songId) : [...prev, songId]
-    ));
+    
+    const isCurrentlyFavorite = isFavorited(songId);
+    
+    try {
+      if (isCurrentlyFavorite) {
+        // Remove from favorites
+        const res = await fetch('/api/removeFavorite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: songId })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setFavoriteSongs(data.favorites || []);
+        }
+      } else {
+        // Add to favorites - need to get full song data
+        const allSongs = [...searchResults, ...placeholderSongs, ...favoriteSongs];
+        const song = allSongs.find(s => s.id === songId);
+        
+        if (song) {
+          const res = await fetch('/api/setfavorite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(song)
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            setFavoriteSongs(data.favorites || []);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+    }
   };
 
-  const isFavorite = (songId) => favorites.includes(songId);
-
-  const getFavoriteSongs = () => {
-    const allSongs = [...searchResults, ...placeholderSongs, ...recommendedSongs];
-    return allSongs.filter(song => favorites.includes(song.id));
-  };
+  const isFavorited = (songId) => favoriteSongs.some(song => song.id === songId);
 
   return (
     <div className="App">
@@ -118,10 +141,10 @@ function App() {
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             handleSearch={handleSearch}
-            recommendedSongs={recommendedSongs}
+            recommendedSongs={favoriteSongs}
             handleSongClick={handleSongClick}
             toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
+            isFavorite={isFavorited}
           />
         )}
 
@@ -131,17 +154,17 @@ function App() {
           setCurrentView={setCurrentView}
           handleSongClick={handleSongClick}
           toggleFavorite={toggleFavorite}
-          isFavorite={isFavorite}
+          isFavorite={isFavorited}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
         />
       )}        {currentView === 'favorites' && (
           <FavoritesView
-            favoriteSongs={getFavoriteSongs()}
+            favoriteSongs={favoriteSongs}
             setCurrentView={setCurrentView}
             handleSongClick={handleSongClick}
             toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
+            isFavorite={isFavorited}
           />
         )}
 
@@ -151,7 +174,7 @@ function App() {
             setCurrentView={setCurrentView}
             previousView={previousView}
             toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
+            isFavorite={isFavorited}
             handleSongClick={handleSongClick}
             recommendedSongs={getSimilarSongs()}
           />

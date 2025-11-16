@@ -1,0 +1,93 @@
+[
+  {
+    "artist": "7870241",
+    "authorUserId": "7870241",
+    "description": "transcription of pokemon lake theme from Pokemon DPP ",
+    "difficulty": "N/A",
+    "duration": "76",
+    "id": "5541758",
+    "instrumentsCount": "1",
+    "instrumentsNames": [
+      "Piano"
+    ],
+    "key": "N/A",
+    "pagesCount": "1",
+    "partsCount": "1",
+    "partsNames": [
+      "Piano"
+    ],
+    "score": 14.251515941484298,
+    "timeCreated": "2019-04-25 05:41:23 UTC",
+    "timeUpdated": "2019-04-25 05:42:04 UTC",
+    "title": "Pokemon Lake Theme",
+    "url": "/user/7870241/scores/5541758"
+  },
+  {
+    "artist": "26961252",
+    "authorUserId": "26961252",
+    "description": "From Persona 4",
+    "difficulty": "N/A",
+    "duration": "91",
+    "id": "6301327",
+    "instrumentsCount": "1",
+    "instrumentsNames": [
+      "Bass"
+    ],
+    "key": "N/A",
+    "pagesCount": "2",
+    "partsCount": "1",
+    "partsNames": [
+      "Electric Bass"
+    ],
+    "score": 6.811726961504979,
+    "timeCreated": "2020-08-18 15:19:09 UTC",
+    "timeUpdated": "2020-08-18 15:23:15 UTC",
+    "title": "Shadow world [Persona 4] Bass tab",
+    "url": "/user/26961252/scores/6301327"
+  },
+  {
+    "artist": "34568556",
+    "authorUserId": "34568556",
+    "description": "",
+    "difficulty": "N/A",
+    "duration": "50",
+    "id": "6054690",
+    "instrumentsCount": "1",
+    "instrumentsNames": [
+      "Piano"
+    ],
+    "key": "N/A",
+    "pagesCount": "1",
+    "partsCount": "1",
+    "partsNames": [
+      "Piano"
+    ],
+    "score": 15.13427668221237,
+    "timeCreated": "2020-03-31 17:07:30 UTC",
+    "timeUpdated": "2020-03-31 21:05:47 UTC",
+    "title": "Zeldas_Lullaby",
+    "url": "/user/34568556/scores/6054690"
+  },
+  {
+    "artist": "268671",
+    "authorUserId": "268671",
+    "description": "",
+    "difficulty": "N/A",
+    "duration": "144",
+    "id": "254686",
+    "instrumentsCount": "0",
+    "instrumentsNames": [],
+    "key": "N/A",
+    "pagesCount": "2",
+    "partsCount": "2",
+    "partsNames": [
+      "C Alto Ocarina",
+      "Piano"
+    ],
+    "score": 9.819331588871457,
+    "timeCreated": "2014-07-25 22:00:32 UTC",
+    "timeUpdated": "2018-07-16 09:02:55 UTC",
+    "title": "Title Theme: Ocarina of Time",
+    "url": "/user/268671/scores/254686"
+  }
+]

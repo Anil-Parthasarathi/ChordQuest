@@ -220,13 +220,24 @@
   align-items: center;
   gap: 0.8rem;
   flex-wrap: wrap;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--turquoise);
+  min-height: 80px;
 }
 
 .recommendation-song-title {
   font-size: 1.3rem;
   color: var(--turquoise);
   margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  max-height: calc(1.3rem * 1.4 * 3);
 }
 
 .recommendation-instruments-badges {
@@ -234,6 +245,8 @@
   gap: 0.4rem;
   flex-wrap: wrap;
   align-items: center;
+  margin-bottom: 0.8rem;
+  min-height: 28px;
 }
 
 .instrument-badge-rec {
@@ -275,7 +288,8 @@
 .recommendation-artist {
   font-size: 1rem;
   color: var(--lavender);
-  margin-bottom: 1rem;
+  margin: 0;
+  margin-bottom: 0.8rem;
   font-family: Arial, sans-serif;
 }
 

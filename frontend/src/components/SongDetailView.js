@@ -1,4 +1,5 @@
 import React from 'react';
+import RecommendedSongsList from './RecommendedSongsList';
 
 function SongDetailView({ 
   song, 
@@ -137,51 +138,14 @@ function SongDetailView({
       )}
 
       {/* Similar Songs Recommendations */}
-      <div className="similar-songs-section">
-        <h2 className="section-title">Similar Songs</h2>
-        <div className="similar-songs-list">
-          {recommendedSongs.map(recSong => (
-            <div 
-              key={recSong.id} 
-              className="similar-song-card"
-              onClick={() => handleSongClick(recSong.id)}
-            >
-              <div className="similar-song-info">
-                <div className="similar-title-row">
-                  <h3 className="similar-song-title">{recSong.title}</h3>
-                </div>
-                <div className="similar-meta-row">
-                  {recSong.timeUpdated && (
-                    <p className="similar-song-artist">{new Date(recSong.timeUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                  )}
-                  {recSong.instrumentsNames && recSong.instrumentsNames.length > 0 && (
-                    <div className="similar-instruments-badges">
-                      {recSong.instrumentsNames.slice(0, 2).map((instrument, idx) => (
-                        <span key={idx} className="instrument-badge-similar">{instrument}</span>
-                      ))}
-                      {recSong.instrumentsNames.length > 2 && (
-                        <span className="instrument-badge-similar instrument-badge-more">+{recSong.instrumentsNames.length - 2}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="similar-song-tags">
-                  {recSong.duration > 0 && <span className="similar-tag similar-tag-duration">⏱ {Math.floor(recSong.duration / 60)}:{String(recSong.duration % 60).padStart(2, '0')}</span>}
-                  {recSong.pagesCount > 0 && <span className="similar-tag">{recSong.pagesCount} pg</span>}
-                  {recSong.partsCount > 0 && <span className="similar-tag">{recSong.partsCount} parts</span>}
-                </div>
-              </div>
-              <button 
-                className={`favorite-star ${isFavorite(recSong.id) ? 'favorited' : ''}`}
-                onClick={(e) => toggleFavorite(e, recSong.id)}
-                aria-label="Toggle favorite"
-              >
-                {isFavorite(recSong.id) ? '★' : '☆'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RecommendedSongsList
+        songs={recommendedSongs}
+        handleSongClick={handleSongClick}
+        toggleFavorite={toggleFavorite}
+        isFavorite={isFavorite}
+        title="Similar Songs"
+        variant="similar"
+      />
     </div>
   );
 }
