@@ -44,7 +44,7 @@ CONCURRENCY_LIMIT = len(API_KEYS)  # Set to number of API keys
 def get_next_pair():
     """Get the next API key and the Webshare rotating proxy"""
     api_key = next(api_cycle)
-    proxy = "http://user-retraptor_xK03O:Scraper22+++@dc.oxylabs.io:8000"
+    proxy = # ADD PROXY URL HERE
     return api_key, proxy
 
 def save_checkpoint(processed_users, users_to_process, all_users):
