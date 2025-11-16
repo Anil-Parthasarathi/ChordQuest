@@ -9,6 +9,7 @@ import SongDetailView from './components/SongDetailView';
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentView, setCurrentView] = useState('home'); // 'home', 'results', 'favorites', 'songDetail'
+  const [previousView, setPreviousView] = useState('home'); // Track the view to return to from song detail
   const [searchResults, setSearchResults] = useState([]);
   const [favorites, setFavorites] = useState(() => {
     try {
@@ -72,6 +73,10 @@ function App() {
   };
 
   const handleSongClick = (songId) => {
+    // Save current view before navigating to song detail
+    if (currentView !== 'songDetail') {
+      setPreviousView(currentView);
+    }
     setCurrentSongId(songId);
     setCurrentView('songDetail');
   };
@@ -142,6 +147,7 @@ function App() {
           <SongDetailView
             song={getCurrentSong()}
             setCurrentView={setCurrentView}
+            previousView={previousView}
             toggleFavorite={toggleFavorite}
             isFavorite={isFavorite}
             handleSongClick={handleSongClick}

@@ -2,7 +2,8 @@ import React from 'react';
 
 function SongDetailView({ 
   song, 
-  setCurrentView, 
+  setCurrentView,
+  previousView = 'home', // Default to home if not provided
   toggleFavorite, 
   isFavorite,
   handleSongClick,
@@ -12,7 +13,7 @@ function SongDetailView({
     return (
       <div className="song-detail-view">
         <div className="detail-header">
-          <button className="back-btn" onClick={() => setCurrentView('home')}>
+          <button className="back-btn" onClick={() => setCurrentView(previousView)}>
             ← Back
           </button>
         </div>
@@ -25,8 +26,8 @@ function SongDetailView({
     <div className="song-detail-view">
       {/* Header with back button */}
       <div className="detail-header">
-        <button className="back-btn" onClick={() => setCurrentView('home')}>
-          ← Back to Search
+        <button className="back-btn" onClick={() => setCurrentView(previousView)}>
+          ← Back to {previousView === 'results' ? 'Search Results' : previousView === 'favorites' ? 'Favorites' : 'Home'}
         </button>
       </div>
 
@@ -34,8 +35,30 @@ function SongDetailView({
       <div className="song-info-section">
         <div className="song-header-content">
           <div className="song-main-info">
-            <h1 className="detail-song-title">{song.title}</h1>
-            <p className="detail-song-artist">by {song.artist}</p>
+            <div className="detail-title-row">
+              <h1 className="detail-song-title">{song.title}</h1>
+              {song.instrumentsNames && song.instrumentsNames.length > 0 && (
+                <div className="detail-instruments-badges">
+                  {song.instrumentsNames.slice(0, 3).map((instrument, idx) => (
+                    <span key={idx} className="instrument-badge-detail-inline">{instrument}</span>
+                  ))}
+                  {song.instrumentsNames.length > 3 && (
+                    <span className="instrument-badge-detail-inline instrument-badge-more">+{song.instrumentsNames.length - 3}</span>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="detail-song-meta">
+              {song.timeUpdated && (
+                <span className="detail-song-artist">{new Date(song.timeUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              )}
+              {song.duration > 0 && (
+                <>
+                  {song.timeUpdated && <span className="meta-divider">•</span>}
+                  <span className="detail-song-duration">⏱ {Math.floor(song.duration / 60)}:{String(song.duration % 60).padStart(2, '0')}</span>
+                </>
+              )}
+            </div>
           </div>
           <button 
             className={`favorite-star-large ${isFavorite(song.id) ? 'favorited' : ''}`}
@@ -47,22 +70,33 @@ function SongDetailView({
         </div>
         
         <div className="song-metadata">
-          <div className="metadata-item">
-            <span className="metadata-label">Difficulty:</span>
-            <span className="metadata-value difficulty-badge">{song.difficulty}</span>
-          </div>
-          <div className="metadata-item">
-            <span className="metadata-label">Key:</span>
-            <span className="metadata-value key-badge">{song.key}</span>
-          </div>
-          <div className="metadata-item">
-            <span className="metadata-label">Tempo:</span>
-            <span className="metadata-value">{song.tempo || '120 BPM'}</span>
-          </div>
-          <div className="metadata-item">
-            <span className="metadata-label">Time Signature:</span>
-            <span className="metadata-value">{song.timeSignature || '4/4'}</span>
-          </div>
+          {song.pagesCount > 0 && (
+            <div className="metadata-item metadata-item-classy">
+              <span className="metadata-icon">📄</span>
+              <div className="metadata-content">
+                <span className="metadata-label">Pages</span>
+                <span className="metadata-value">{song.pagesCount}</span>
+              </div>
+            </div>
+          )}
+          {song.partsCount > 0 && (
+            <div className="metadata-item metadata-item-classy">
+              <span className="metadata-icon">🎼</span>
+              <div className="metadata-content">
+                <span className="metadata-label">Parts</span>
+                <span className="metadata-value">{song.partsCount}</span>
+              </div>
+            </div>
+          )}
+          {song.partsNames && song.partsNames.length > 0 && (
+            <div className="metadata-item metadata-item-classy metadata-item-wide">
+              <span className="metadata-icon">🎹</span>
+              <div className="metadata-content">
+                <span className="metadata-label">Part Names</span>
+                <span className="metadata-value">{song.partsNames.join(', ')}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -113,11 +147,28 @@ function SongDetailView({
               onClick={() => handleSongClick(recSong.id)}
             >
               <div className="similar-song-info">
-                <h3 className="similar-song-title">{recSong.title}</h3>
-                <p className="similar-song-artist">{recSong.artist}</p>
+                <div className="similar-title-row">
+                  <h3 className="similar-song-title">{recSong.title}</h3>
+                </div>
+                <div className="similar-meta-row">
+                  {recSong.timeUpdated && (
+                    <p className="similar-song-artist">{new Date(recSong.timeUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  )}
+                  {recSong.instrumentsNames && recSong.instrumentsNames.length > 0 && (
+                    <div className="similar-instruments-badges">
+                      {recSong.instrumentsNames.slice(0, 2).map((instrument, idx) => (
+                        <span key={idx} className="instrument-badge-similar">{instrument}</span>
+                      ))}
+                      {recSong.instrumentsNames.length > 2 && (
+                        <span className="instrument-badge-similar instrument-badge-more">+{recSong.instrumentsNames.length - 2}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <div className="similar-song-tags">
-                  <span className="similar-tag">{recSong.difficulty}</span>
-                  <span className="similar-tag">{recSong.key}</span>
+                  {recSong.duration > 0 && <span className="similar-tag similar-tag-duration">⏱ {Math.floor(recSong.duration / 60)}:{String(recSong.duration % 60).padStart(2, '0')}</span>}
+                  {recSong.pagesCount > 0 && <span className="similar-tag">{recSong.pagesCount} pg</span>}
+                  {recSong.partsCount > 0 && <span className="similar-tag">{recSong.partsCount} parts</span>}
                 </div>
               </div>
               <button 

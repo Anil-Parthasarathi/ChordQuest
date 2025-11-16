@@ -54,7 +54,9 @@ def build_index():
     
     title = sheet.get("title", "")
     description = sheet.get("description", "")
-    combined_text = f"{title} {description}"
+    instruments = " ".join(sheet.get("instrumentsNames", []))
+    parts = " ".join(sheet.get("partsNames", []))
+    combined_text = f"{title} {description} {instruments} {parts}"
     tokenized_text = process_token(combined_text)
     
     doc_id = sheet["id"]
@@ -181,6 +183,7 @@ def bm25_Search(query):
       'id': sheet_data.get('id'),
       'title': sheet_data.get('title', 'Untitled'),
       'artist': sheet_data.get('authorUserId', 'Unknown'),
+      'authorUserId': sheet_data.get('authorUserId', ''),
       'difficulty': 'N/A',
       'key': 'N/A',
       'url': sheet_data.get('url', ''),
@@ -188,7 +191,12 @@ def bm25_Search(query):
       'description': sheet_data.get('description', ''),
       'instrumentsNames': sheet_data.get('instrumentsNames', []),
       'pagesCount': sheet_data.get('pagesCount', 0),
-      'partsCount': sheet_data.get('partsCount', 0)
+      'partsCount': sheet_data.get('partsCount', 0),
+      'partsNames': sheet_data.get('partsNames', []),
+      'instrumentsCount': sheet_data.get('instrumentsCount', 0),
+      'duration': sheet_data.get('duration', 0),
+      'timeCreated': sheet_data.get('timeCreated', ''),
+      'timeUpdated': sheet_data.get('timeUpdated', '')
     })
 
   return top_results

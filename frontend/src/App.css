@@ -215,10 +215,61 @@
   flex: 1;
 }
 
+.recommendation-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
 .recommendation-song-title {
   font-size: 1.3rem;
   color: var(--turquoise);
-  margin-bottom: 0.5rem;
+  margin: 0;
+}
+
+.recommendation-instruments-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.instrument-badge-rec {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: var(--black);
+  padding: 0.4rem 0.8rem;
+  border-radius: 18px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border: 2px solid #FFD700;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.3);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  animation: subtle-glow 2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.instrument-badge-rec::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+.instrument-badge-rec.instrument-badge-more {
+  background: linear-gradient(135deg, var(--turquoise) 0%, #30C0B0 100%);
+  border-color: var(--turquoise);
+  box-shadow: 0 4px 15px rgba(64, 224, 208, 0.6), 0 0 20px rgba(64, 224, 208, 0.3);
+  animation: subtle-glow-turquoise 2s ease-in-out infinite;
 }
 
 .recommendation-artist {
@@ -243,6 +294,13 @@
   font-size: 0.85rem;
   border: 1px solid var(--lavender);
   font-family: Arial, sans-serif;
+}
+
+.recommendation-tag-duration {
+  background: linear-gradient(135deg, rgba(230, 230, 250, 0.3) 0%, rgba(64, 224, 208, 0.3) 100%);
+  border: 1.5px solid var(--lavender);
+  color: var(--white);
+  font-weight: 600;
 }
 
 .recommendation-card .favorite-star {
@@ -304,6 +362,8 @@
   align-items: center;
   cursor: pointer;
   transition: all 0.3s;
+  min-height: 120px;
+  gap: 1.5rem;
 }
 
 .song-item:hover {
@@ -314,18 +374,150 @@
 
 .song-info {
   text-align: left;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.song-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .song-title {
   font-size: 1.5rem;
   color: var(--turquoise);
-  margin-bottom: 0.5rem;
+  margin: 0;
 }
 
-.song-artist {
-  font-size: 1rem;
-  color: var(--lavender);
+.song-instruments-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.instrument-badge {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: var(--black);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border: 2px solid #FFD700;
   font-family: Arial, sans-serif;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.3);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: subtle-glow 2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.instrument-badge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes subtle-glow {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 165, 0, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+.instrument-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 165, 0, 0.6);
+}
+
+.instrument-badge-more {
+  background: linear-gradient(135deg, var(--turquoise) 0%, #30C0B0 100%);
+  border-color: var(--turquoise);
+  box-shadow: 0 4px 15px rgba(64, 224, 208, 0.6), 0 0 20px rgba(64, 224, 208, 0.3);
+  animation: subtle-glow-turquoise 2s ease-in-out infinite;
+}
+
+@keyframes subtle-glow-turquoise {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(64, 224, 208, 0.6), 0 0 20px rgba(64, 224, 208, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(64, 224, 208, 0.8), 0 0 30px rgba(64, 224, 208, 0.5);
+  }
+}
+
+.song-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.song-updated {
+  font-size: 0.9rem;
+  color: rgba(230, 230, 250, 0.7);
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+.song-right-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.song-meta-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.meta-tag {
+  background-color: rgba(64, 224, 208, 0.2);
+  color: var(--turquoise);
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  border: 1px solid var(--turquoise);
+  font-family: Arial, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.meta-tag-duration {
+  background: linear-gradient(135deg, rgba(230, 230, 250, 0.3) 0%, rgba(64, 224, 208, 0.3) 100%);
+  border: 2px solid var(--lavender);
+  color: var(--white);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
 }
 
 .song-details {
@@ -417,16 +609,86 @@
   flex: 1;
 }
 
-.detail-song-title {
-  font-size: 2.5rem;
-  color: var(--turquoise);
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
   margin-bottom: 0.5rem;
 }
 
-.detail-song-artist {
-  font-size: 1.3rem;
-  color: var(--lavender);
+.detail-song-title {
+  font-size: 2.5rem;
+  color: var(--turquoise);
+  margin: 0;
+}
+
+.detail-instruments-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.instrument-badge-detail-inline {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: var(--black);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border: 2px solid #FFD700;
   font-family: Arial, sans-serif;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.3);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: subtle-glow 2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.instrument-badge-detail-inline::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+.instrument-badge-detail-inline.instrument-badge-more {
+  background: linear-gradient(135deg, var(--turquoise) 0%, #30C0B0 100%);
+  border-color: var(--turquoise);
+  box-shadow: 0 4px 15px rgba(64, 224, 208, 0.6), 0 0 20px rgba(64, 224, 208, 0.3);
+  animation: subtle-glow-turquoise 2s ease-in-out infinite;
+}
+
+.detail-song-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.detail-song-artist {
+  font-size: 1rem;
+  color: rgba(230, 230, 250, 0.8);
+  font-family: Arial, sans-serif;
+}
+
+.detail-song-duration {
+  font-size: 1rem;
+  color: var(--turquoise);
+  font-weight: 600;
+  font-family: Arial, sans-serif;
+}
+
+.meta-divider {
+  color: rgba(230, 230, 250, 0.5);
+  font-size: 1rem;
 }
 
 .favorite-star-large {
@@ -452,8 +714,8 @@
 
 .song-metadata {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
   margin-top: 1.5rem;
 }
 
@@ -463,17 +725,75 @@
   gap: 0.5rem;
 }
 
+.metadata-item-classy {
+  background: linear-gradient(135deg, rgba(64, 224, 208, 0.08) 0%, rgba(230, 230, 250, 0.08) 100%);
+  border: 1px solid rgba(64, 224, 208, 0.3);
+  border-radius: 12px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s;
+}
+
+.metadata-item-classy:hover {
+  background: linear-gradient(135deg, rgba(64, 224, 208, 0.15) 0%, rgba(230, 230, 250, 0.15) 100%);
+  border-color: var(--turquoise);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 224, 208, 0.2);
+}
+
+.metadata-item-wide {
+  grid-column: 1 / -1;
+}
+
+.metadata-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.metadata-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+
 .metadata-label {
-  font-size: 0.9rem;
-  color: var(--lavender);
-  opacity: 0.8;
+  font-size: 0.85rem;
+  color: rgba(230, 230, 250, 0.7);
   font-family: Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .metadata-value {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: var(--white);
   font-family: Arial, sans-serif;
+  font-weight: 500;
+}
+
+.instruments-badges-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.instrument-badge-detail {
+  background: linear-gradient(135deg, var(--turquoise) 0%, #30C0B0 100%);
+  color: var(--black);
+  padding: 0.6rem 1rem;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 2px solid rgba(64, 224, 208, 0.5);
+  font-family: Arial, sans-serif;
+  box-shadow: 0 3px 8px rgba(64, 224, 208, 0.4);
 }
 
 .difficulty-badge,
@@ -592,6 +912,24 @@
   font-size: 0.9rem;
 }
 
+/* Description Section */
+.description-section {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 2px solid var(--lavender);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.song-description {
+  font-size: 1rem;
+  color: var(--white);
+  line-height: 1.8;
+  font-family: Arial, sans-serif;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 /* Similar Songs Section */
 .similar-songs-section {
   margin-top: 3rem;
@@ -626,17 +964,78 @@
   flex: 1;
 }
 
+.similar-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--turquoise);
+}
+
 .similar-song-title {
   font-size: 1.2rem;
   color: var(--turquoise);
-  margin-bottom: 0.3rem;
+  margin: 0;
+}
+
+.similar-instruments-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.instrument-badge-similar {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: var(--black);
+  padding: 0.35rem 0.7rem;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border: 2px solid #FFD700;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.3);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  animation: subtle-glow 2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.instrument-badge-similar::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+.instrument-badge-similar.instrument-badge-more {
+  background: linear-gradient(135deg, var(--turquoise) 0%, #30C0B0 100%);
+  border-color: var(--turquoise);
+  box-shadow: 0 4px 15px rgba(64, 224, 208, 0.6), 0 0 20px rgba(64, 224, 208, 0.3);
+  animation: subtle-glow-turquoise 2s ease-in-out infinite;
 }
 
 .similar-song-artist {
   font-size: 0.95rem;
   color: var(--lavender);
-  margin-bottom: 0.8rem;
+  margin: 0;
   font-family: Arial, sans-serif;
+}
+
+.similar-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
 }
 
 .similar-song-tags {
@@ -653,6 +1052,13 @@
   font-size: 0.8rem;
   border: 1px solid var(--lavender);
   font-family: Arial, sans-serif;
+}
+
+.similar-tag-duration {
+  background: linear-gradient(135deg, rgba(230, 230, 250, 0.3) 0%, rgba(64, 224, 208, 0.3) 100%);
+  border: 1.5px solid var(--lavender);
+  color: var(--white);
+  font-weight: 600;
 }
 
 /* Responsive Design */
