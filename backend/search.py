@@ -177,7 +177,7 @@ def bm25_Search(query):
   sheet_id_to_data = {sheet["id"]: sheet for sheet in sheets}
   
   top_results = []
-  for doc_id in result[:10]:
+  for doc_id in result:
     sheet_data = sheet_id_to_data[doc_id]
     top_results.append({
       'id': sheet_data.get('id'),

@@ -10,6 +10,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentView, setCurrentView] = useState('home'); // 'home', 'results', 'favorites', 'songDetail'
   const [previousView, setPreviousView] = useState('home'); // Track the view to return to from song detail
+  const [currentPage, setCurrentPage] = useState(1); // Track current page for results
   const [searchResults, setSearchResults] = useState([]);
   const [favorites, setFavorites] = useState(() => {
     try {
@@ -59,6 +60,7 @@ function App() {
         const data = await res.json();
         console.log('Search results from backend:', data.result);
         setSearchResults(data.result);
+        setCurrentPage(1);
         setCurrentView('results');
       } else {
         console.error('Backend search returned error status:', res.status);
@@ -123,17 +125,17 @@ function App() {
           />
         )}
 
-        {currentView === 'results' && (
-          <ResultsView
-            searchResults={searchResults}
-            setCurrentView={setCurrentView}
-            handleSongClick={handleSongClick}
-            toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
-          />
-        )}
-
-        {currentView === 'favorites' && (
+      {currentView === 'results' && (
+        <ResultsView 
+          searchResults={searchResults}
+          setCurrentView={setCurrentView}
+          handleSongClick={handleSongClick}
+          toggleFavorite={toggleFavorite}
+          isFavorite={isFavorite}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+        />
+      )}        {currentView === 'favorites' && (
           <FavoritesView
             favoriteSongs={getFavoriteSongs()}
             setCurrentView={setCurrentView}

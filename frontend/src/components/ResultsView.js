@@ -5,20 +5,33 @@ function ResultsView({
   setCurrentView, 
   handleSongClick, 
   toggleFavorite, 
-  isFavorite 
+  isFavorite,
+  currentPage,
+  setCurrentPage
 }) {
+  const RESULTS_PER_PAGE = 20;
+  const totalPages = Math.ceil(searchResults.length / RESULTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
+  const endIndex = startIndex + RESULTS_PER_PAGE;
+  const currentResults = searchResults.slice(startIndex, endIndex);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="results-view">
       <div className="results-header">
-        <h2>Search Results</h2>
+        <h2>Search Results ({searchResults.length} total)</h2>
         <button className="back-btn" onClick={() => setCurrentView('home')}>
           ← Back to Search
         </button>
       </div>
       
       <div className="song-list">
-        {searchResults.length > 0 ? (
-          searchResults.map(song => (
+        {currentResults.length > 0 ? (
+          currentResults.map(song => (
             <div 
               key={song.id} 
               className="song-item"
@@ -64,6 +77,51 @@ function ResultsView({
           <p className="no-results">No songs found matching your search.</p>
         )}
       </div>
+      
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button 
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            ← Previous
+          </button>
+          <div className="pagination-info">
+            <span className="page-numbers">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    className={`page-number ${currentPage === pageNum ? 'active' : ''}`}
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </span>
+            <span className="page-text">Page {currentPage} of {totalPages}</span>
+          </div>
+          <button 
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
