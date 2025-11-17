@@ -341,6 +341,31 @@
   color: var(--turquoise);
 }
 
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filter-toggle-btn {
+  background-color: var(--turquoise);
+  color: var(--black);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Audiowide', Arial, sans-serif;
+}
+
+.filter-toggle-btn:hover {
+  background-color: var(--lavender);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 224, 208, 0.4);
+}
+
 .back-btn {
   background-color: transparent;
   color: var(--lavender);
@@ -357,6 +382,129 @@
   background-color: var(--lavender);
   color: var(--black);
   transform: translateX(-5px);
+}
+
+/* Filter Controls */
+.filter-controls {
+  background: linear-gradient(135deg, rgba(64, 224, 208, 0.08) 0%, rgba(230, 230, 250, 0.05) 100%);
+  border: 2px solid var(--turquoise);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.filter-section label {
+  color: var(--turquoise);
+  font-size: 1rem;
+  font-weight: bold;
+  font-family: 'Audiowide', Arial, sans-serif;
+}
+
+.instrument-dropdown {
+  background-color: rgba(230, 230, 250, 0.1);
+  color: var(--white);
+  border: 2px solid var(--turquoise);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-family: 'Audiowide', Arial, sans-serif;
+  cursor: pointer;
+  transition: all 0.3s;
+  outline: none;
+}
+
+.instrument-dropdown:hover {
+  border-color: var(--lavender);
+  background-color: rgba(230, 230, 250, 0.15);
+}
+
+.instrument-dropdown:focus {
+  border-color: var(--lavender);
+  box-shadow: 0 0 0 3px rgba(230, 230, 250, 0.2);
+}
+
+.instrument-dropdown option {
+  background-color: var(--black);
+  color: var(--white);
+  padding: 0.5rem;
+}
+
+.dual-slider {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: linear-gradient(to right, var(--turquoise) 0%, var(--lavender) 100%);
+  outline: none;
+  position: absolute;
+  pointer-events: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--turquoise);
+  cursor: pointer;
+  pointer-events: all;
+  border: 3px solid var(--black);
+  box-shadow: 0 2px 8px rgba(64, 224, 208, 0.5);
+  transition: all 0.2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: var(--lavender);
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(230, 230, 250, 0.6);
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--turquoise);
+  cursor: pointer;
+  pointer-events: all;
+  border: 3px solid var(--black);
+  box-shadow: 0 2px 8px rgba(64, 224, 208, 0.5);
+  transition: all 0.2s;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: var(--lavender);
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(230, 230, 250, 0.6);
+}
+
+.slider-max {
+  background: transparent;
+}
+
+.slider-max::-webkit-slider-thumb {
+  background: var(--lavender);
+}
+
+.slider-max::-moz-range-thumb {
+  background: var(--lavender);
 }
 
 /* Song List */
