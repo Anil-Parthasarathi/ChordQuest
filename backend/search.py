@@ -4,8 +4,9 @@ import string
 import re
 import math
 import pickle
+from metadata_loader import id_to_metadata
 
-sheets = []
+# Only store what's needed for BM25 search - not the full sheet data
 tokenized_sheets = []
 universal_dictionary = {}
 tfidf_retrieval_index = {}
@@ -35,7 +36,7 @@ def process_token(input_string):
   return tokenized
 
 def build_index():
-  global sheets, tokenized_sheets, universal_dictionary, tfidf_retrieval_index, lengths_dict, num_docs, avg_doc_length
+  global tokenized_sheets, universal_dictionary, tfidf_retrieval_index, lengths_dict, num_docs, avg_doc_length
   
   print(f"Loading data from {data_path}")
   
@@ -49,8 +50,6 @@ def build_index():
   for sheet in all_sheets:
     if "id" not in sheet:
       continue
-    
-    sheets.append(sheet)
     
     title = sheet.get("title", "")
     description = sheet.get("description", "")
@@ -88,8 +87,8 @@ def build_index():
   avg_doc_length = sum(lengths_dict.values()) / num_docs
   
   print("Saving index to cache...")
+  # Only cache the search index data, not the full sheets (metadata_loader has that)
   cache_data = {
-    'sheets': sheets,
     'tokenized_sheets': tokenized_sheets,
     'universal_dictionary': universal_dictionary,
     'tfidf_retrieval_index': tfidf_retrieval_index,
@@ -98,14 +97,13 @@ def build_index():
     'avg_doc_length': avg_doc_length
   }
   with open(cache_path, 'wb') as f:
-    pickle.dump(cache_data, f)
+    pickle.dump(cache_data, f, protocol=pickle.HIGHEST_PROTOCOL)
   print("Index cached successfully!")
 
 if cache_path.exists():
   print(f"Loading cached index from {cache_path}")
   with open(cache_path, 'rb') as f:
     cache_data = pickle.load(f)
-    sheets = cache_data['sheets']
     tokenized_sheets = cache_data['tokenized_sheets']
     universal_dictionary = cache_data['universal_dictionary']
     tfidf_retrieval_index = cache_data['tfidf_retrieval_index']
@@ -174,13 +172,13 @@ def bm25_Search(query):
 
   result = sorted(score_dict, key=lambda x: score_dict[x], reverse=True)
 
-  sheet_id_to_data = {sheet["id"]: sheet for sheet in sheets}
-  
   top_results = []
 
   # Cap at 10,000 results for performance reasons
   for doc_id in result[:10000]:
-    sheet_data = sheet_id_to_data[doc_id]
+    # Get metadata from shared loader
+    sheet_data = id_to_metadata.get(doc_id, {})
+    
     top_results.append({
       'id': sheet_data.get('id'),
       'title': sheet_data.get('title', 'Untitled'),

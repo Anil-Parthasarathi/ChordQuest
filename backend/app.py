@@ -5,6 +5,7 @@ import os
 import json
 from pathlib import Path
 from search import bm25_Search
+from search_embedding import embedding_search
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
@@ -49,13 +50,19 @@ def hello():
 
 @app.route('/api/search', methods=['GET'])
 def search_sheet_music():
-    """Search endpoint"""
+    """Search endpoint with support for both BM25 and embedding search"""
     query = request.args.get('query', '').strip()
+    search_type = request.args.get('type', 'bm25').strip().lower()
+    
     if not query:
         return jsonify({'error': 'missing query parameter'}), 400
-
-    result = bm25_Search(query)
-    return jsonify({'result': result})
+    
+    if search_type == 'embedding':
+        result = embedding_search(query)
+    else:  # default to bm25
+        result = bm25_Search(query)
+    
+    return jsonify({'result': result, 'searchType': search_type})
 
 @app.route('/api/setfavorite', methods=['POST'])
 def set_favorite():

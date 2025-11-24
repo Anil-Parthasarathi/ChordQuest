@@ -4,6 +4,8 @@ import RecommendedSongsList from './RecommendedSongsList';
 function HomeView({ 
   searchQuery, 
   setSearchQuery, 
+  searchType,
+  setSearchType,
   handleSearch, 
   recommendedSongs, 
   handleSongClick, 
@@ -23,6 +25,24 @@ function HomeView({
       </div>
 
       <form onSubmit={handleSearch} className="search-form">
+        <div className="search-controls">
+          <div className="search-type-toggle">
+            <button
+              type="button"
+              className={`toggle-btn ${searchType === 'bm25' ? 'active' : ''}`}
+              onClick={() => setSearchType('bm25')}
+            >
+              BM25
+            </button>
+            <button
+              type="button"
+              className={`toggle-btn ${searchType === 'embedding' ? 'active' : ''}`}
+              onClick={() => setSearchType('embedding')}
+            >
+              Embedding
+            </button>
+          </div>
+        </div>
         <div className="search-container">
           <input
             type="text"

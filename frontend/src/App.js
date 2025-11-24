@@ -8,6 +8,7 @@ import SongDetailView from './components/SongDetailView';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState('embedding'); // 'bm25' or 'embedding'
   const [currentView, setCurrentView] = useState('home'); // 'home', 'results', 'favorites', 'songDetail'
   const [previousView, setPreviousView] = useState('home'); // Track the view to return to from song detail
   const [currentPage, setCurrentPage] = useState(1); // Track current page for results
@@ -49,7 +50,7 @@ function App() {
     }
 
     try {
-      const res = await fetch(`/api/search?query=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`/api/search?query=${encodeURIComponent(searchQuery)}&type=${searchType}`);
       if (res.ok) {
         const data = await res.json();
         console.log('Search results from backend:', data.result);
@@ -140,6 +141,8 @@ function App() {
           <HomeView
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            searchType={searchType}
+            setSearchType={setSearchType}
             handleSearch={handleSearch}
             recommendedSongs={favoriteSongs}
             handleSongClick={handleSongClick}
