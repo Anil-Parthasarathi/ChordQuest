@@ -5,6 +5,9 @@ import os
 import json
 from pathlib import Path
 from search import bm25_Search
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 # Load environment variables from root .env file
 env_path = Path(__file__).parent.parent / '.env'
@@ -96,6 +99,72 @@ def retrieve_favorites():
     try:
         favorites = load_favorites()
         return jsonify({'favorites': favorites})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/check-availability', methods=['POST'])
+def check_availability():
+    """Check if multiple MuseScore sheets are still available"""
+    try:
+        songs = request.get_json()
+        if not songs:
+            return jsonify({'error': 'No songs provided'}), 400
+        
+        def check_single_url(song):
+            if not song.get('url'):
+                return {'id': song['id'], 'available': False}
+            
+            try:
+                url = song['url']
+                
+                # Handle URLs that already contain the full domain
+                if url.startswith('https://musescore.com') or url.startswith('http://musescore.com'):
+                    embed_url = f"{url}/embed"
+                elif url.startswith('http'):
+                    # URL has different domain or malformed (like https://musescore.comhttps://)
+                    # Filter these out immediately
+                    return {'id': song['id'], 'available': False}
+                else:
+                    # Relative path starting with /
+                    embed_url = f"https://musescore.com{url}/embed"
+                
+                # Add headers to mimic a real browser to avoid Cloudflare blocking
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Referer': 'https://musescore.com/',
+                    'Upgrade-Insecure-Requests': '1',
+                    'Sec-Fetch-Dest': 'iframe',
+                    'Sec-Fetch-Mode': 'navigate',
+                    'Sec-Fetch-Site': 'same-origin',
+                }
+                
+                response = requests.get(embed_url, headers=headers, timeout=5, allow_redirects=True)
+                
+                # Available music has about me and response code is not 404
+                if "<div class=\"ms-footer--title\">About MuseScore</div>" in response.text or response.status_code == 404:  
+                    return {'id': song['id'], 'available': False}
+                
+                return {'id': song['id'], 'available': True}
+                
+            except requests.exceptions.Timeout:
+                # On timeout, assume it's available (to avoid false negatives)
+                return {'id': song['id'], 'available': True}
+            except Exception as e:
+                # On other errors, assume available to avoid filtering out valid sheets
+                print(f"Error checking {song.get('url')}: {e}")
+                return {'id': song['id'], 'available': True}
+        
+        # Check multiple URLs concurrently for better performance
+        availability_map = {}
+        with ThreadPoolExecutor(max_workers=5) as executor:  # Reduced workers since we're using GET
+            futures = {executor.submit(check_single_url, song): song for song in songs}
+            for future in as_completed(futures):
+                result = future.result()
+                availability_map[result['id']] = result['available']
+        
+        return jsonify({'availability': availability_map})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

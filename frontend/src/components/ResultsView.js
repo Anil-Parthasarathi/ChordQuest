@@ -3,6 +3,7 @@ import SongList from './SongList';
 
 // Store filter state outside component to persist across re-renders
 let savedFilterState = null;
+let globalAvailabilityCache = {};
 
 function ResultsView({ 
   searchResults, 
@@ -45,6 +46,10 @@ function ResultsView({
   const [partCountRange, setPartCountRange] = useState(savedFilterState?.partCountRange ?? [1, maxParts]);
   const [pageCountRange, setPageCountRange] = useState(savedFilterState?.pageCountRange ?? [1, maxPages]);
 
+  const [availabilityMap, setAvailabilityMap] = useState(globalAvailabilityCache);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [hideUnavailable, setHideUnavailable] = useState(true); // Default to hiding unavailable
+
   // Save filter state whenever it changes
   useEffect(() => {
     savedFilterState = {
@@ -73,6 +78,10 @@ function ResultsView({
     const matchesDuration = song.duration >= durationRange[0] && song.duration <= durationRange[1];
     const matchesParts = (song.partsCount || 0) >= partCountRange[0] && (song.partsCount || 0) <= partCountRange[1];
     const matchesPages = (song.pagesCount || 0) >= pageCountRange[0] && (song.pagesCount || 0) <= pageCountRange[1];
+
+    if (hideUnavailable && availabilityMap[song.id] === false) {
+      return false;
+    }
     
     return matchesInstrument && matchesDuration && matchesParts && matchesPages;
   });
@@ -81,6 +90,44 @@ function ResultsView({
   const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
   const endIndex = startIndex + RESULTS_PER_PAGE;
   const currentResults = filteredResults.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (currentResults.length === 0) return;
+      
+      // Filter out songs that are already in the cache
+      const songsToCheck = currentResults.filter(song => availabilityMap[song.id] === undefined);
+      
+      if (songsToCheck.length === 0) {
+         setIsCheckingAvailability(false);
+         return;
+      }
+      
+      setIsCheckingAvailability(true);
+      try {
+        const response = await fetch('/api/check-availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(songsToCheck)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Update global cache
+          Object.assign(globalAvailabilityCache, data.availability);
+          setAvailabilityMap(prev => ({...prev, ...data.availability}));
+        }
+      } catch (err) {
+        console.error('Failed to check availability:', err);
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    };
+    
+    // Delay slightly to avoid too many requests
+    const timer = setTimeout(checkAvailability, 300);
+    return () => clearTimeout(timer);
+  }, [currentPage, JSON.stringify(currentResults.map(s => s.id))]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);

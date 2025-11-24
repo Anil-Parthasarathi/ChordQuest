@@ -111,7 +111,7 @@ function SongDetailView({
                 id="score-iframe" 
                 width="100%" 
                 height="1000" 
-                src={`https://musescore.com${song.url}/embed`} 
+                src={song.url.startsWith('http') ? `${song.url}/embed` : `https://musescore.com${song.url}/embed`} 
                 frameborder="0" 
                 allowfullscreen 
                 allow="autoplay; fullscreen"
@@ -119,7 +119,7 @@ function SongDetailView({
               >
               </iframe>
               <div className="sheet-music-credit">
-                <a href={`https://musescore.com${song.url}`} target="_blank" rel="noreferrer" className="sheet-music-title">{song.title}</a> by <a href={`https://musescore.com/user/${song.authorUserId || song.artist}`} target="_blank" rel="noreferrer" className="sheet-music-author">{song.artist}</a> via MuseScore
+                <a href={song.url.startsWith('http') ? song.url : `https://musescore.com${song.url}`} target="_blank" rel="noreferrer" className="sheet-music-title">{song.title}</a> by <a href={`https://musescore.com/user/${song.authorUserId || song.artist}`} target="_blank" rel="noreferrer" className="sheet-music-author">{song.artist}</a> via MuseScore
               </div>
             </>
           )}
