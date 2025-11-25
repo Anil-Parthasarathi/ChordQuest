@@ -1,260 +1,164 @@
-import pandas as pd
+import torch
+import torch.nn as nn
+import json
 import numpy as np
 from pathlib import Path
 from metadata_loader import id_to_metadata
-import json
 
-# Path to Last.fm dataset
-LASTFM_DATASET_PATH = Path(__file__).parent / 'lastfm_dataset.csv'
+# Define paths
+MODEL_DATA_DIR = Path(__file__).parent / 'data/processed'
 
-recvae_model = None
+# ==========================================
+# 1. Model Architecture (Must match training)
+# ==========================================
+class RecVAE(nn.Module):
+    def __init__(self, input_dim, hidden_dim=600, latent_dim=200):
+        super(RecVAE, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, latent_dim * 2)
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, input_dim)
+        )
 
+    def forward(self, rating_matrix):
+        x = torch.nn.functional.normalize(rating_matrix, p=2, dim=1)
+        h = self.encoder(x)
+        mu, _ = torch.chunk(h, 2, dim=1)
+        z = mu 
+        return self.decoder(z)
 
-class DummyRecVAEModel:
-    """
-    Dummy RecVAE model for testing.
-    Replace this with the actual trained RecVAE model later.
-    """
-    
+# ==========================================
+# 2. The Inference Engine
+# ==========================================
+class RecommenderEngine:
     def __init__(self):
-        self.lastfm_songs = []
-        self.load_lastfm_data()
-    
-    def load_lastfm_data(self):
-        """Load Last.fm dataset to have song titles available"""
+        self.device = torch.device("cpu")
+        self.model = None
+        self.is_ready = False
+        
+        # Maps
+        self.recbole_to_work = {}
+        self.work_to_recbole = {}
+        self.sheet_to_work = {}
+        self.work_to_sheets = {}
+        
         try:
-            df = pd.read_csv(LASTFM_DATASET_PATH, usecols=['work_id'], nrows=10000)
-            self.lastfm_songs = df.tolist()
-            print(f"Loaded {len(self.lastfm_songs)} Last.fm songs for dummy model")
+            self._load_artifacts()
         except Exception as e:
-            print(f"Warning: Could not load Last.fm data: {e}")
-            self.lastfm_songs = []
-    
-    def predict(self, song_title, k=10):
-        """
-        Dummy prediction function.
+            print(f"⚠️ Warning: AI Recommender failed to load: {e}")
+            print("Recommendations will be empty.")
+
+    def _load_artifacts(self):
+        print(f"Loading AI Model from {MODEL_DATA_DIR}...")
         
-        Args:
-            song_title: The song title to get recommendations for
-            k: Number of recommendations to return
+        # 1. Load Maps
+        with open(MODEL_DATA_DIR / "item_map_reverse.json") as f:
+            self.recbole_to_work = json.load(f)
+            self.work_to_recbole = {v: int(k) for k, v in self.recbole_to_work.items()}
             
-        Returns:
-            List of recommended Last.fm song titles
-        """
-        # For now, just return random songs from Last.fm dataset
-        # TODO: Replace with actual RecVAE model predictions
-        if not self.lastfm_songs:
+        with open(MODEL_DATA_DIR / "sheet_to_work.json") as f:
+            self.sheet_to_work = json.load(f)
+            
+        with open(MODEL_DATA_DIR / "work_to_sheets.json") as f:
+            self.work_to_sheets = json.load(f)
+
+        # 2. Initialize Model
+        # Input dim is vocabulary size + 1 (for padding)
+        input_dim = len(self.recbole_to_work) + 1 
+        self.model = RecVAE(input_dim)
+        
+        # 3. Load Weights
+        weight_path = MODEL_DATA_DIR / "recvae_weights.pth"
+        checkpoint = torch.load(weight_path, map_location=self.device)
+        
+        # Handle RecBole checkpoint wrapper
+        if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
+            state_dict = checkpoint['state_dict']
+        else:
+            state_dict = checkpoint
+
+        self.model.load_state_dict(state_dict)
+        self.model.eval()
+        self.is_ready = True
+        print("✅ RecVAE Model Loaded Successfully.")
+
+    def recommend(self, liked_sheet_ids, top_k=10):
+        if not self.is_ready or not liked_sheet_ids:
             return []
-        
-        # Return random songs (excluding exact matches)
-        recommendations = []
-        for song in self.lastfm_songs:
-            if song.lower() != song_title.lower():
-                recommendations.append(song)
-                if len(recommendations) >= k:
-                    break
-        
-        return recommendations
 
+        # A. Convert Sheet IDs -> Input Vector Indices
+        input_indices = []
+        for sheet_id in liked_sheet_ids:
+            # Sheet ID -> Work ID
+            if sheet_id in self.sheet_to_work:
+                work_id = str(self.sheet_to_work[sheet_id])
+                # Work ID -> RecBole Index
+                if work_id in self.work_to_recbole:
+                    input_indices.append(self.work_to_recbole[work_id])
+        
+        input_indices = list(set(input_indices))
+        if not input_indices:
+            return [] # Cold start
 
-# Take musecore id then get work id to map to lastfm
-def find_similar_lastfm_title(musescore_title):
-    """
-    Find the most similar Last.fm song title for a given MuseScore title.
-    
-    TODO: Implement actual similarity matching (e.g., using fuzzy string matching,
-    embeddings, or exact match lookup).
-    
-    Args:
-        musescore_title: The MuseScore song title
+        # B. Build Vector
+        input_dim = len(self.recbole_to_work) + 1
+        input_vector = torch.zeros(input_dim)
+        input_vector[input_indices] = 1.0
         
-    Returns:
-        The most similar Last.fm song title
-    """
-    # For now, just return the title as-is
-    # TODO: Implement proper matching logic
-    return musescore_title
-
-def find_musescore_songs_from_lastfm(lastfm_titles, k=10):
-    """
-    Map Last.fm song titles back to MuseScore songs.
-    
-    TODO: Implement similarity matching to find MuseScore songs that match
-    the Last.fm recommendations.
-    
-    Args:
-        lastfm_titles: List of Last.fm song titles
-        k: Maximum number of MuseScore songs to return
-        
-    Returns:
-        List of MuseScore song dictionaries with metadata
-    """
-    musescore_results = []
-    
-    # Get all MuseScore songs
-    for song_id, metadata in id_to_metadata.items():
-        if len(musescore_results) >= k:
-            break
-        
-        title = metadata.get('title', '')
-        
-        # Simple matching: check if any Last.fm title contains keywords from this title
-        # TODO: Implement better matching (fuzzy matching, embeddings, etc.)
-        for lastfm_title in lastfm_titles:
-            if title.lower() in lastfm_title.lower() or lastfm_title.lower() in title.lower():
-                musescore_results.append({
-                    'id': song_id,
-                    'title': metadata.get('title', 'Untitled'),
-                    'artist': metadata.get('authorUserId', 'Unknown'),
-                    'authorUserId': metadata.get('authorUserId', ''),
-                    'difficulty': 'N/A',
-                    'key': 'N/A',
-                    'url': metadata.get('url', ''),
-                    'score': 0.0,  # Placeholder score
-                    'description': metadata.get('description', ''),
-                    'instrumentsNames': metadata.get('instrumentsNames', []),
-                    'pagesCount': metadata.get('pagesCount', 0),
-                    'partsCount': metadata.get('partsCount', 0),
-                    'partsNames': metadata.get('partsNames', []),
-                    'instrumentsCount': metadata.get('instrumentsCount', 0),
-                    'duration': metadata.get('duration', 0),
-                    'timeCreated': metadata.get('timeCreated', ''),
-                    'timeUpdated': metadata.get('timeUpdated', '')
-                })
-                break
-    
-    # If we didn't find enough matches, add some random songs
-    if len(musescore_results) < k:
-        for song_id, metadata in id_to_metadata.items():
-            if len(musescore_results) >= k:
-                break
+        # C. Predict
+        with torch.no_grad():
+            scores = self.model(input_vector.unsqueeze(0))
             
-            # Skip if already added
-            if any(s['id'] == song_id for s in musescore_results):
-                continue
-            
-            musescore_results.append({
-                'id': song_id,
-                'title': metadata.get('title', 'Untitled'),
-                'artist': metadata.get('authorUserId', 'Unknown'),
-                'authorUserId': metadata.get('authorUserId', ''),
-                'difficulty': 'N/A',
-                'key': 'N/A',
-                'url': metadata.get('url', ''),
-                'score': 0.0,
-                'description': metadata.get('description', ''),
-                'instrumentsNames': metadata.get('instrumentsNames', []),
-                'pagesCount': metadata.get('pagesCount', 0),
-                'partsCount': metadata.get('partsCount', 0),
-                'partsNames': metadata.get('partsNames', []),
-                'instrumentsCount': metadata.get('instrumentsCount', 0),
-                'duration': metadata.get('duration', 0),
-                'timeCreated': metadata.get('timeCreated', ''),
-                'timeUpdated': metadata.get('timeUpdated', '')
-            })
-    
-    return musescore_results
+            # Mask out items user already liked (so we don't recommend them again)
+            scores[0, input_indices] = -float('inf')
+            scores[0, 0] = -float('inf') # Mask padding
 
+            _, top_indices = torch.topk(scores, top_k)
+            top_indices = top_indices.squeeze().tolist()
 
-def get_recvae_recommendations(musescore_titles, k=10):
-    """
-    Get recommendations using RecVAE model.
-    
-    Workflow:
-    1. Convert MuseScore titles to Last.fm titles (find most similar)
-    2. Use RecVAE model to get Last.fm recommendations
-    3. Convert Last.fm recommendations back to MuseScore songs
-    
-    Args:
-        musescore_titles: List of MuseScore song titles (or single title)
-        k: Number of recommendations to return
-        
-    Returns:
-        List of recommended MuseScore songs
-    """
-    global recvae_model
-    
-    # Initialize dummy model if needed
-    if recvae_model is None:
-        print("Initializing dummy RecVAE model...")
-        recvae_model = DummyRecVAEModel()
-    
-    # Ensure musescore_titles is a list
-    if isinstance(musescore_titles, str):
-        musescore_titles = [musescore_titles]
-    
-    # Collect all Last.fm recommendations
-    all_lastfm_recommendations = []
-    
-    for musescore_title in musescore_titles:
-        # Step 1: Convert MuseScore title to Last.fm title
-        lastfm_title = find_similar_lastfm_title(musescore_title)
-        
-        # Step 2: Get RecVAE recommendations for this Last.fm song
-        lastfm_recs = recvae_model.predict(lastfm_title, k=k*2)  # Get more to ensure variety
-        all_lastfm_recommendations.extend(lastfm_recs)
-    
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_lastfm_recs = []
-    for rec in all_lastfm_recommendations:
-        if rec not in seen:
-            seen.add(rec)
-            unique_lastfm_recs.append(rec)
-    
-    # Step 3: Convert Last.fm recommendations back to MuseScore songs
-    musescore_recommendations = find_musescore_songs_from_lastfm(unique_lastfm_recs, k=k)
-    
-    return musescore_recommendations
+        # D. Convert Indices back to Sheet IDs
+        recommended_sheets = []
+        for idx in top_indices:
+            idx_str = str(idx)
+            if idx_str in self.recbole_to_work:
+                work_id = str(self.recbole_to_work[idx_str])
+                
+                if work_id in self.work_to_sheets:
+                    sheets = self.work_to_sheets[work_id]
+                    # Pick the first sheet ID for this work
+                    best_sheet = sheets[0] if isinstance(sheets, list) else sheets
+                    recommended_sheets.append(best_sheet)
+                    
+        return recommended_sheets
 
+# Initialize Global Engine
+rec_engine = RecommenderEngine()
 
+# ==========================================
+# 3. Public API Function
+# ==========================================
 def get_recommendations_by_song_ids(song_ids, k=10):
     """
-    Get recommendations based on MuseScore song IDs using RecVAE.
-    
     Args:
-        song_ids: List of MuseScore song IDs
-        k: Number of recommendations to return
-        
+        song_ids: List of MuseScore song IDs (strings)
+        k: Number of recommendations
     Returns:
-        List of recommended MuseScore songs
+        List of full metadata objects for recommended songs
     """
-    if not song_ids:
-        return []
+    # 1. Get Recommended IDs from AI
+    rec_ids = rec_engine.recommend(song_ids, top_k=k)
     
-    # Get titles for the song IDs
-    musescore_titles = []
-    for song_id in song_ids:
-        metadata = id_to_metadata.get(song_id)
-        if metadata:
-            musescore_titles.append(metadata.get('title', ''))
-    
-    if not musescore_titles:
-        return []
-    
-    # Get recommendations
-    recommendations = get_recvae_recommendations(musescore_titles, k=k)
-    
-    # Filter out the input songs
-    input_song_ids = set(song_ids)
-    recommendations = [rec for rec in recommendations if rec['id'] not in input_song_ids]
-    
-    return recommendations[:k]
-
-
-if __name__ == '__main__':
-    # Test the recommendation system
-    print("Testing RecVAE recommendation system...")
-    
-    # Test with a sample song ID (you can replace with actual ID)
-    sample_song_ids = list(id_to_metadata.keys())[:1]
-    
-    if sample_song_ids:
-        print(f"\nGetting recommendations for song ID: {sample_song_ids[0]}")
-        recommendations = get_recommendations_by_song_ids(sample_song_ids, k=5)
-        
-        print(f"\nFound {len(recommendations)} recommendations:")
-        for i, rec in enumerate(recommendations, 1):
-            print(f"{i}. {rec['title']}")
-    else:
-        print("No songs found in metadata")
+    # 2. Hydrate with Metadata (Title, Artist, etc.)
+    results = []
+    for rid in rec_ids:
+        # Check if ID exists in your metadata loader
+        if rid in id_to_metadata:
+            # Return the full object so the frontend can render cards
+            results.append(id_to_metadata[rid])
+            
+    return results
