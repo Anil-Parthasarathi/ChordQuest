@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import HomeView from './components/HomeView';
@@ -8,9 +8,59 @@ import SongDetailView from './components/SongDetailView';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState('embedding'); // 'bm25' or 'embedding'
   const [currentView, setCurrentView] = useState('home'); // 'home', 'results', 'favorites', 'songDetail'
+  const [previousView, setPreviousView] = useState('home'); // Track the view to return to from song detail
+  const [currentPage, setCurrentPage] = useState(1); // Track current page for results
   const [searchResults, setSearchResults] = useState([]);
-  const [favorites, setFavorites] = useState([]);
+  const [favoriteSongs, setFavoriteSongs] = useState([]);
+  const [homeRecommendations, setHomeRecommendations] = useState([]);
+  const [similarSongs, setSimilarSongs] = useState([]);
+
+  // Load favorites from backend on startup
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const res = await fetch('/api/retrieveFavorites');
+        if (res.ok) {
+          const data = await res.json();
+          setFavoriteSongs(data.favorites || []);
+        }
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
+      }
+    };
+    loadFavorites();
+  }, []);
+
+  // Fetch home recommendations when favorites change
+  useEffect(() => {
+    const fetchHomeRecommendations = async () => {
+      if (favoriteSongs.length === 0) {
+        setHomeRecommendations([]);
+        return;
+      }
+
+      try {
+        const songIds = favoriteSongs.map(song => song.id);
+        const res = await fetch('/api/recommendations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ songIds, k: 10 })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setHomeRecommendations(data.recommendations || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch home recommendations:', err);
+      }
+    };
+
+    fetchHomeRecommendations();
+  }, [favoriteSongs]);
+
   const [currentSongId, setCurrentSongId] = useState(null);
 
   // Placeholder data for music sheets
@@ -22,58 +72,106 @@ function App() {
     { id: 5, title: "Wonderwall", artist: "Oasis", difficulty: "Beginner", key: "Em" },
   ];
 
-  // Recommended songs (placeholder)
-  const recommendedSongs = [
-    { id: 6, title: "Sweet Child O' Mine", artist: "Guns N' Roses", difficulty: "Intermediate", key: "D Major" },
-    { id: 7, title: "Stairway to Heaven", artist: "Led Zeppelin", difficulty: "Advanced", key: "Am" },
-    { id: 8, title: "Hey Jude", artist: "The Beatles", difficulty: "Beginner", key: "F Major" },
-  ];
-
-  // Placeholder search function, just simple binary search for now
-  const handleSearch = (e) => {
+  // Search function
+  const handleSearch = async (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      // Filter placeholder results based on search query
-      const filtered = placeholderSongs.filter(song =>
-        song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        song.artist.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setSearchResults(filtered);
+    if (!searchQuery.trim()) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/search?query=${encodeURIComponent(searchQuery)}&type=${searchType}`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Search results from backend:', data.result);
+        setSearchResults(data.result);
+        setCurrentPage(1);
+        setCurrentView('results');
+      } else {
+        console.error('Backend search returned error status:', res.status);
+        setSearchResults([]);
+        setCurrentView('results');
+      }
+    } catch (err) {
+      console.error('Backend search failed:', err);
+      setSearchResults([]);
       setCurrentView('results');
     }
   };
 
-  const handleSongClick = (songId) => {
+  const handleSongClick = async (songId) => {
+    // Save current view before navigating to song detail
+    if (currentView !== 'songDetail') {
+      setPreviousView(currentView);
+    }
     setCurrentSongId(songId);
     setCurrentView('songDetail');
-  };
 
-  const getCurrentSong = () => {
-    const allSongs = [...placeholderSongs, ...recommendedSongs];
-    return allSongs.find(song => song.id === currentSongId);
-  };
+    // Fetch similar songs based on the clicked song
+    try {
+      const res = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songIds: [songId], k: 6 })
+      });
 
-  const getSimilarSongs = () => {
-    // Get 3 random songs as similar songs (placeholder logic)
-    const allSongs = [...placeholderSongs, ...recommendedSongs];
-    const otherSongs = allSongs.filter(song => song.id !== currentSongId);
-    return otherSongs.slice(0, 3);
-  };
-
-  const toggleFavorite = (e, songId) => {
-    e.stopPropagation(); // Prevent song click when clicking favorite button
-    if (favorites.includes(songId)) {
-      setFavorites(favorites.filter(id => id !== songId));
-    } else {
-      setFavorites([...favorites, songId]);
+      if (res.ok) {
+        const data = await res.json();
+        setSimilarSongs(data.recommendations || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch similar songs:', err);
+      setSimilarSongs([]);
     }
   };
 
-  const isFavorite = (songId) => favorites.includes(songId);
-
-  const getFavoriteSongs = () => {
-    return [...placeholderSongs, ...recommendedSongs].filter(song => favorites.includes(song.id));
+  const getCurrentSong = () => {
+    const allSongs = [...searchResults, ...placeholderSongs, ...favoriteSongs];
+    return allSongs.find(song => song.id === currentSongId);
   };
+
+  const toggleFavorite = async (e, songId) => {
+    e.stopPropagation(); // Prevent song click when clicking favorite button
+    
+    const isCurrentlyFavorite = isFavorited(songId);
+    
+    try {
+      if (isCurrentlyFavorite) {
+        // Remove from favorites
+        const res = await fetch('/api/removeFavorite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: songId })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setFavoriteSongs(data.favorites || []);
+        }
+      } else {
+        // Add to favorites - need to get full song data
+        const allSongs = [...searchResults, ...placeholderSongs, ...favoriteSongs];
+        const song = allSongs.find(s => s.id === songId);
+        
+        if (song) {
+          const res = await fetch('/api/setfavorite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(song)
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            setFavoriteSongs(data.favorites || []);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+    }
+  };
+
+  const isFavorited = (songId) => favoriteSongs.some(song => song.id === songId);
 
   return (
     <div className="App">
@@ -84,31 +182,33 @@ function App() {
           <HomeView
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
+            searchType={searchType}
+            setSearchType={setSearchType}
             handleSearch={handleSearch}
-            recommendedSongs={recommendedSongs}
+            recommendedSongs={homeRecommendations}
             handleSongClick={handleSongClick}
             toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
+            isFavorite={isFavorited}
           />
         )}
 
-        {currentView === 'results' && (
-          <ResultsView
-            searchResults={searchResults}
-            setCurrentView={setCurrentView}
-            handleSongClick={handleSongClick}
-            toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
-          />
-        )}
-
-        {currentView === 'favorites' && (
+      {currentView === 'results' && (
+        <ResultsView 
+          searchResults={searchResults}
+          setCurrentView={setCurrentView}
+          handleSongClick={handleSongClick}
+          toggleFavorite={toggleFavorite}
+          isFavorite={isFavorited}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+        />
+      )}        {currentView === 'favorites' && (
           <FavoritesView
-            favoriteSongs={getFavoriteSongs()}
+            favoriteSongs={favoriteSongs}
             setCurrentView={setCurrentView}
             handleSongClick={handleSongClick}
             toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
+            isFavorite={isFavorited}
           />
         )}
 
@@ -116,10 +216,11 @@ function App() {
           <SongDetailView
             song={getCurrentSong()}
             setCurrentView={setCurrentView}
+            previousView={previousView}
             toggleFavorite={toggleFavorite}
-            isFavorite={isFavorite}
+            isFavorite={isFavorited}
             handleSongClick={handleSongClick}
-            recommendedSongs={getSimilarSongs()}
+            recommendedSongs={similarSongs}
           />
         )}
       </main>

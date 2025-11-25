@@ -1,8 +1,11 @@
 import React from 'react';
+import RecommendedSongsList from './RecommendedSongsList';
 
 function HomeView({ 
   searchQuery, 
   setSearchQuery, 
+  searchType,
+  setSearchType,
   handleSearch, 
   recommendedSongs, 
   handleSongClick, 
@@ -22,6 +25,24 @@ function HomeView({
       </div>
 
       <form onSubmit={handleSearch} className="search-form">
+        <div className="search-controls">
+          <div className="search-type-toggle">
+            <button
+              type="button"
+              className={`toggle-btn ${searchType === 'bm25' ? 'active' : ''}`}
+              onClick={() => setSearchType('bm25')}
+            >
+              BM25
+            </button>
+            <button
+              type="button"
+              className={`toggle-btn ${searchType === 'embedding' ? 'active' : ''}`}
+              onClick={() => setSearchType('embedding')}
+            >
+              Embedding
+            </button>
+          </div>
+        </div>
         <div className="search-container">
           <input
             type="text"
@@ -37,34 +58,13 @@ function HomeView({
       </form>
 
       {/* Recommendations Section */}
-      <div className="recommendations-section">
-        <h2 className="recommendations-title">Recommended for You</h2>
-        <div className="recommendations-list">
-          {recommendedSongs.map(song => (
-            <div 
-              key={song.id} 
-              className="recommendation-card"
-              onClick={() => handleSongClick(song.id)}
-            >
-              <div className="recommendation-content">
-                <h3 className="recommendation-song-title">{song.title}</h3>
-                <p className="recommendation-artist">{song.artist}</p>
-                <div className="recommendation-tags">
-                  <span className="recommendation-tag">{song.difficulty}</span>
-                  <span className="recommendation-tag">{song.key}</span>
-                </div>
-              </div>
-              <button 
-                className={`favorite-star ${isFavorite(song.id) ? 'favorited' : ''}`}
-                onClick={(e) => toggleFavorite(e, song.id)}
-                aria-label="Toggle favorite"
-              >
-                {isFavorite(song.id) ? '★' : '☆'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RecommendedSongsList
+        songs={recommendedSongs}
+        handleSongClick={handleSongClick}
+        toggleFavorite={toggleFavorite}
+        isFavorite={isFavorite}
+        title="Recommended for You"
+      />
     </div>
   );
 }
