@@ -14,6 +14,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1); // Track current page for results
   const [searchResults, setSearchResults] = useState([]);
   const [favoriteSongs, setFavoriteSongs] = useState([]);
+  const [homeRecommendations, setHomeRecommendations] = useState([]);
+  const [similarSongs, setSimilarSongs] = useState([]);
 
   // Load favorites from backend on startup
   useEffect(() => {
@@ -30,6 +32,34 @@ function App() {
     };
     loadFavorites();
   }, []);
+
+  // Fetch home recommendations when favorites change
+  useEffect(() => {
+    const fetchHomeRecommendations = async () => {
+      if (favoriteSongs.length === 0) {
+        setHomeRecommendations([]);
+        return;
+      }
+
+      try {
+        const songIds = favoriteSongs.map(song => song.id);
+        const res = await fetch('/api/recommendations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ songIds, k: 10 })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setHomeRecommendations(data.recommendations || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch home recommendations:', err);
+      }
+    };
+
+    fetchHomeRecommendations();
+  }, [favoriteSongs]);
 
   const [currentSongId, setCurrentSongId] = useState(null);
 
@@ -69,24 +99,35 @@ function App() {
     }
   };
 
-  const handleSongClick = (songId) => {
+  const handleSongClick = async (songId) => {
     // Save current view before navigating to song detail
     if (currentView !== 'songDetail') {
       setPreviousView(currentView);
     }
     setCurrentSongId(songId);
     setCurrentView('songDetail');
+
+    // Fetch similar songs based on the clicked song
+    try {
+      const res = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songIds: [songId], k: 6 })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSimilarSongs(data.recommendations || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch similar songs:', err);
+      setSimilarSongs([]);
+    }
   };
 
   const getCurrentSong = () => {
     const allSongs = [...searchResults, ...placeholderSongs, ...favoriteSongs];
     return allSongs.find(song => song.id === currentSongId);
-  };
-
-  const getSimilarSongs = () => {
-    const allSongs = [...searchResults, ...placeholderSongs, ...favoriteSongs];
-    const otherSongs = allSongs.filter(song => song.id !== currentSongId);
-    return otherSongs.slice(0, 3);
   };
 
   const toggleFavorite = async (e, songId) => {
@@ -144,7 +185,7 @@ function App() {
             searchType={searchType}
             setSearchType={setSearchType}
             handleSearch={handleSearch}
-            recommendedSongs={favoriteSongs}
+            recommendedSongs={homeRecommendations}
             handleSongClick={handleSongClick}
             toggleFavorite={toggleFavorite}
             isFavorite={isFavorited}
@@ -179,7 +220,7 @@ function App() {
             toggleFavorite={toggleFavorite}
             isFavorite={isFavorited}
             handleSongClick={handleSongClick}
-            recommendedSongs={getSimilarSongs()}
+            recommendedSongs={similarSongs}
           />
         )}
       </main>

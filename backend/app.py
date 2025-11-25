@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from search import bm25_Search
 from search_embedding import embedding_search
+from recbole_recommender import get_recommendations_by_song_ids
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
@@ -106,6 +107,28 @@ def retrieve_favorites():
     try:
         favorites = load_favorites()
         return jsonify({'favorites': favorites})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/recommendations', methods=['POST'])
+def get_recommendations():
+    """Get song recommendations based on a list of song IDs using RecVAE"""
+    try:
+        data = request.get_json()
+        if not data or 'songIds' not in data:
+            return jsonify({'error': 'missing songIds parameter'}), 400
+        
+        song_ids = data['songIds']
+        if not isinstance(song_ids, list):
+            return jsonify({'error': 'songIds must be a list'}), 400
+        
+        # Get number of recommendations (default to 10)
+        k = data.get('k', 10)
+        
+        # Get recommendations using the RecVAE-based system
+        recommendations = get_recommendations_by_song_ids(song_ids, k=k)
+        
+        return jsonify({'recommendations': recommendations})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
