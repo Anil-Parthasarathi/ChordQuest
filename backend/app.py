@@ -1,17 +1,22 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from dotenv import load_dotenv
 import os
 import json
 from pathlib import Path
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["OMP_NUM_THREADS"] = "1"
+
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from dotenv import load_dotenv
+
+from recbole_recommender import get_recommendations_by_song_ids
+
 from search import bm25_Search
 from search_embedding import embedding_search
-from recbole_recommender import get_recommendations_by_song_ids
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-# Load environment variables from root .env file
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
@@ -34,10 +39,6 @@ def save_favorites(favorites):
     """Save favorites to JSON file"""
     with open(favorites_file, 'w', encoding='utf-8') as f:
         json.dump(favorites, f, indent=2, ensure_ascii=False)
-
-# Access API keys (example - use when needed)
-# LASTFM_API_KEY = os.getenv('LASTFM_API_KEY')
-# SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -125,11 +126,23 @@ def get_recommendations():
         # Get number of recommendations (default to 10)
         k = data.get('k', 10)
         
-        # Get recommendations using the RecVAE-based system
+        print(f"\n[API] Recommendation request for song_ids: {song_ids}")
+        
+        # Get recommendations
         recommendations = get_recommendations_by_song_ids(song_ids, k=k)
+        
+        # Log if no recommendations found
+        if not recommendations:
+            print(f"[API] ⚠️ No recommendations found for song_ids: {song_ids}")
+        else:
+            print(f"[API] ✓ Returned {len(recommendations)} recommendations")
+            # Log first few IDs for debugging
+            rec_ids = [r.get('id') for r in recommendations[:3]]
+            print(f"[API] Sample recommendation IDs: {rec_ids}")
         
         return jsonify({'recommendations': recommendations})
     except Exception as e:
+        print(f"[API] ✗ Error getting recommendations: {e}")
         return jsonify({'error': str(e)}), 500
     
 @app.route('/api/check-availability', methods=['POST'])

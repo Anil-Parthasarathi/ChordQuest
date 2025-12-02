@@ -5,4 +5,5 @@ pandas
 numpy
 faiss-cpu
 sentence-transformers
-
+recbole
+requests
