@@ -140,7 +140,7 @@ ChordQuest/
 - **CORS** - flask-cors for cross-origin requests
 - **Sentence Transformers** - Semantic embeddings (all-MiniLM-L6-v2)
 - **FAISS** - Vector similarity search
-- **PyTorch** - Deep learning models (RecVAE, BPR)
+- **PyTorch** - Deep learning models
 - **RecBole** - Recommendation library
 - **Pandas/NumPy** - Data processing
 
